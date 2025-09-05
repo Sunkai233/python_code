@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI对话助手</title>
+    <style>
+        /* 页面主体样式 */
+        body {
+            font-family: Arial, sans-serif;    /* 设置字体为Arial，无衬线字体 */
+            max-width: 800px;                  /* 页面最大宽度限制为800像素 */
+            margin: 50px auto;                 /* 上下边距50px，左右自动居中 */
+            padding: 20px;                     /* 内边距20px，给页面内容留出空间 */
+            background-color: #f5f5f5;         /* 页面背景色设为浅灰色 */
+        }
+
+        /* 主容器样式 */
+        .container {
+            background: white;                  /* 容器背景设为白色 */
+            padding: 30px;                     /* 容器内边距30px */
+            border-radius: 10px;               /* 容器圆角半径10px，使容器边角圆滑 */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);  /* 阴影效果：水平0px，垂直2px，模糊10px，透明度0.1的黑色阴影 */
+        }
+
+        /* 标题样式 */
+        h1 {
+            color: #333;                       /* 标题颜色设为深灰色 */
+            text-align: center;                /* 标题文字居中对齐 */
+            margin-bottom: 30px;               /* 标题下方外边距30px */
+        }
+
+        /* 聊天框容器样式 */
+        .chat-box {
+            height: 400px;                     /* 聊天框固定高度400px */
+            overflow-y: auto;                  /* 垂直方向超出时显示滚动条 */
+            border: 1px solid #ddd;            /* 边框：1px实线，浅灰色 */
+            padding: 15px;                     /* 聊天框内边距15px */
+            margin-bottom: 20px;               /* 聊天框下方外边距20px */
+            background-color: #fafafa;         /* 聊天框背景色为非常浅的灰色 */
+            border-radius: 5px;                /* 聊天框圆角半径5px */
+        }
+
+        /* 消息通用样式 */
+        .message {
+            margin-bottom: 15px;               /* 每条消息下方外边距15px，消息间隔 */
+            padding: 10px;                     /* 消息内边距10px */
+            border-radius: 8px;                /* 消息气泡圆角半径8px */
+        }
+
+        /* 用户消息样式 */
+        .user-message {
+            background-color: #007bff;         /* 用户消息背景色为蓝色 */
+            color: white;                      /* 用户消息文字颜色为白色 */
+            text-align: right;                 /* 用户消息文字右对齐 */
+            margin-left: 20%;                 /* 用户消息左边距20%，使消息显示在右侧 */
+        }
+
+        /* AI消息样式 */
+        .ai-message {
+            background-color: #e9ecef;         /* AI消息背景色为浅灰色 */
+            color: #333;                       /* AI消息文字颜色为深灰色 */
+            margin-right: 20%;                /* AI消息右边距20%，使消息显示在左侧 */
+        }
+
+        /* 输入区域容器样式 */
+        .input-group {
+            display: flex;                     /* 使用弹性布局，子元素水平排列 */
+            gap: 10px;                         /* 子元素间隔10px */
+        }
+
+        /* 消息输入框样式 */
+        #messageInput {
+            flex: 1;                           /* 弹性增长系数为1，占据剩余所有空间 */
+            padding: 12px;                     /* 输入框内边距12px */
+            border: 1px solid #ddd;            /* 输入框边框：1px实线，浅灰色 */
+            border-radius: 5px;                /* 输入框圆角半径5px */
+            font-size: 16px;                   /* 输入框字体大小16px */
+        }
+
+        /* 按钮通用样式 */
+        button {
+            padding: 12px 24px;                /* 按钮内边距：上下12px，左右24px */
+            background-color: #007bff;         /* 按钮背景色为蓝色 */
+            color: white;                      /* 按钮文字颜色为白色 */
+            border: none;                      /* 移除按钮默认边框 */
+            border-radius: 5px;                /* 按钮圆角半径5px */
+            cursor: pointer;                   /* 鼠标悬停时显示手型光标 */
+            font-size: 16px;                   /* 按钮字体大小16px */
+        }
+
+        /* 按钮悬停效果 */
+        button:hover {
+            background-color: #0056b3;         /* 鼠标悬停时按钮背景色变为深蓝色 */
+        }
+
+        /* 按钮禁用状态样式 */
+        button:disabled {
+            background-color: #6c757d;         /* 禁用时按钮背景色为灰色 */
+            cursor: not-allowed;               /* 禁用时鼠标光标显示为禁止符号 */
+        }
+
+        /* 加载状态消息样式 */
+        .loading {
+            color: #666;                       /* 加载消息文字颜色为中等灰色 */
+            font-style: italic;                /* 加载消息文字样式为斜体 */
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 页面标题 -->
+        <h1>🤖 AI对话助手</h1>
+
+        <!-- 对话显示区域 -->
+        <div id="chatBox" class="chat-box">
+            <!-- 初始AI欢迎消息 -->
+            <div class="message ai-message">
+                <strong>AI:</strong> 你好！我是一个对话模型，有什么可以帮助你的吗？
+            </div>
+        </div>
+
+        <!-- 用户输入区域 -->
+        <div class="input-group">
+            <!-- 消息输入框 -->
+            <input type="text" id="messageInput" placeholder="输入你的消息..." onkeypress="handleKeyPress(event)">
+            <!-- 发送按钮 -->
+            <button id="sendBtn" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // 处理回车键发送消息
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {        // 检测是否按下回车键
+                sendMessage();                   // 调用发送消息函数
+            }
+        }
+
+        // 发送消息主函数
+        function sendMessage() {
+            // 获取页面元素
+            const messageInput = document.getElementById('messageInput');   // 获取消息输入框元素
+            const sendBtn = document.getElementById('sendBtn');             // 获取发送按钮元素
+            const chatBox = document.getElementById('chatBox');             // 获取聊天框元素
+
+            // 获取并处理用户输入
+            const message = messageInput.value.trim();                      // 获取输入内容并去除首尾空格
+            if (!message) return;                                           // 如果消息为空则直接返回
+
+            // 🔍 调试：打印发送的消息
+            console.log('🔍 发送的消息:', message);
+
+            // 显示用户消息
+            addMessage('user', message);                                    // 在聊天框中添加用户消息
+
+            // 更新UI状态
+            messageInput.value = '';                                        // 清空输入框
+            sendBtn.disabled = true;                                        // 禁用发送按钮防止重复点击
+            sendBtn.textContent = '发送中...';                              // 更改按钮文字显示发送状态
+
+            // 显示加载状态
+            addMessage('ai', '正在思考...', true);                          // 添加AI思考中的提示消息
+
+            // 发送AJAX请求到后端
+            fetch('/chat', {
+                method: 'POST',                                             // 使用POST方法
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',    // 设置请求头为表单格式
+                },
+                body: `message=${encodeURIComponent(message)}`              // 编码消息内容作为请求体
+            })
+            .then(response => {
+                // 🔍 调试：打印响应状态
+                console.log('🔍 响应状态:', response.status, response.statusText);
+                return response.json();                                     // 解析响应为JSON格式
+            })
+            .then(data => {
+                // 🔍 调试：打印原始响应数据
+                console.log('🔍 原始响应数据:', data);
+                console.log('🔍 响应数据类型:', typeof data);
+                console.log('🔍 响应success字段:', data.success);
+                console.log('🔍 响应message字段:', data.message);
+
+                // 移除加载消息
+                removeLoadingMessage();                                     // 删除"正在思考..."消息
+
+                // 根据响应结果处理
+                if (data.success) {                                         // 如果请求成功
+                    console.log('✅ 成功获取AI回复:', data.message);
+                    addMessage('ai', data.message);                         // 显示AI回复
+                } else {                                                    // 如果请求失败
+                    console.log('❌ 后端返回错误:', data.message);
+                    addMessage('ai', '错误: ' + data.message);              // 显示错误信息
+                }
+            })
+            .catch(error => {
+                // 🔍 调试：打印错误信息
+                console.error('❌ 网络请求错误:', error);
+                console.log('🔍 错误详情:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+
+                removeLoadingMessage();                                     // 删除加载消息
+                addMessage('ai', '网络错误，请稍后重试');                    // 显示网络错误提示
+            })
+            .finally(() => {
+                // 恢复UI状态
+                sendBtn.disabled = false;                                   // 重新启用发送按钮
+                sendBtn.textContent = '发送';                               // 恢复按钮文字
+                messageInput.focus();                                       // 重新聚焦到输入框
+                console.log('🔍 请求处理完成');
+            });
+        }
+
+        // 添加消息到聊天框
+        function addMessage(sender, message, isLoading = false) {
+            const chatBox = document.getElementById('chatBox');             // 获取聊天框元素
+            const messageDiv = document.createElement('div');               // 创建新的消息div元素
+
+            // 设置消息样式类
+            messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'ai-message'}`;
+
+            // 处理加载状态
+            if (isLoading) {                                                // 如果是加载消息
+                messageDiv.classList.add('loading');                       // 添加加载样式类
+                messageDiv.id = 'loadingMessage';                          // 设置ID用于后续删除
+            }
+
+            // 设置消息内容
+            const prefix = sender === 'user' ? '你:' : 'AI:';               // 根据发送者设置前缀
+            messageDiv.innerHTML = `<strong>${prefix}</strong> ${message}`; // 设置消息HTML内容
+
+            // 添加到聊天框并滚动到底部
+            chatBox.appendChild(messageDiv);                               // 将消息添加到聊天框
+            chatBox.scrollTop = chatBox.scrollHeight;                      // 滚动到聊天框底部显示最新消息
+        }
+
+        // 移除加载消息
+        function removeLoadingMessage() {
+            const loadingMessage = document.getElementById('loadingMessage'); // 获取加载消息元素
+            if (loadingMessage) {                                            // 如果加载消息存在
+                loadingMessage.remove();                                     // 删除加载消息元素
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();                 // 页面加载完成后自动聚焦到输入框
+        });
+    </script>
+</body>
+</html>
