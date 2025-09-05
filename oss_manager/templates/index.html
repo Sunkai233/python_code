@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSS 文件管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --dark-color: #1e293b;
+            --light-bg: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px;
+            min-height: calc(100vh - 40px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .breadcrumb-container {
+            background: var(--light-bg);
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .breadcrumb {
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--dark-color);
+        }
+
+        .toolbar {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .file-list {
+            padding: 0 30px 30px;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .file-item.folder {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-color: var(--warning-color);
+        }
+
+        .file-item.folder:hover {
+            border-color: #d97706;
+        }
+
+        .file-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .file-icon.folder {
+            color: var(--warning-color);
+        }
+
+        .file-icon.file {
+            color: var(--primary-color);
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .file-meta {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline-danger {
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            background: transparent;
+        }
+
+        .btn-outline-danger:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: var(--light-bg);
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--success-color);
+            background: #f0fdf4;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            border: none;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            margin: 20px 30px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-color);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .file-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-cloud"></i>
+                OSS 文件管理系统
+                <small class="ms-3" style="font-size: 0.6em; opacity: 0.8;">{{ bucket_name }}</small>
+            </h1>
+        </div>
+
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> 根目录
+                        </a>
+                    </li>
+                    {% for breadcrumb in breadcrumbs %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('browse_folder', folder_path=breadcrumb.path) }}">
+                            {{ breadcrumb.name }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ol>
+            </nav>
+        </div>
+
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fas fa-upload"></i> 上传文件
+            </button>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+                <i class="fas fa-folder-plus"></i> 新建文件夹
+            </button>
+        </div>
+
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- 文件列表 -->
+        <div class="file-list">
+            {% if folders or files %}
+            <div class="file-grid">
+                <!-- 文件夹 -->
+                {% for folder in folders %}
+                <div class="file-item folder" onclick="window.location.href='{{ url_for('browse_folder', folder_path=folder.path.rstrip('/')) }}'">
+                    <div class="file-icon folder">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="file-name">{{ folder.name }}</div>
+                    <div class="file-meta">文件夹</div>
+                </div>
+                {% endfor %}
+
+                <!-- 文件 -->
+                {% for file in files %}
+                <div class="file-item">
+                    <div class="file-icon file">
+                        {% if file.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                        <i class="fas fa-image"></i>
+                        {% elif file.name.lower().endswith(('.pdf',)) %}
+                        <i class="fas fa-file-pdf"></i>
+                        {% elif file.name.lower().endswith(('.doc', '.docx')) %}
+                        <i class="fas fa-file-word"></i>
+                        {% elif file.name.lower().endswith(('.zip', '.rar')) %}
+                        <i class="fas fa-file-archive"></i>
+                        {% else %}
+                        <i class="fas fa-file"></i>
+                        {% endif %}
+                    </div>
+                    <div class="file-name">{{ file.name }}</div>
+                    <div class="file-meta">
+                        大小: {{ file.size }}B<br>
+                        修改时间: {{ file.modified }}
+                    </div>
+                    <div class="file-actions">
+                        <a href="{{ url_for('download_file', file_path=file.path) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i> 下载
+                        </a>
+                        <a href="{{ url_for('delete_file', file_path=file.path) }}"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('确定要删除这个文件吗？')">
+                            <i class="fas fa-trash"></i> 删除
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <h3>空文件夹</h3>
+                <p>这个文件夹是空的，您可以上传文件或创建新文件夹。</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 上传文件模态框 -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-upload"></i> 上传文件
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <input type="hidden" name="current_path" value="{{ current_path }}">
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
+                            <p>拖拽文件到这里或点击选择文件</p>
+                            <input type="file" name="file" id="fileInput" style="display: none;" multiple>
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-file-plus"></i> 选择文件
+                            </button>
+                        </div>
+                        <div id="fileList" class="mt-3"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="uploadButton">
+                        <i class="fas fa-upload"></i> 开始上传
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建文件夹模态框 -->
+    <div class="modal fade" id="createFolderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-folder-plus"></i> 新建文件夹
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createFolderForm">
+                        <input type="hidden" name="current_path" value="{{ current_path }}">
+                        <div class="mb-3">
+                            <label for="folderName" class="form-label">文件夹名称</label>
+                            <input type="text" class="form-control" id="folderName" name="folder_name" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" id="createFolderButton">
+                        <i class="fas fa-folder-plus"></i> 创建
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 文件上传功能
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadButton = document.getElementById('uploadButton');
+        let selectedFiles = [];
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = files;
+            displayFileList();
+        }
+
+        function displayFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'alert alert-info d-flex justify-content-between align-items-center';
+                fileItem.innerHTML = `
+                    <span><i class="fas fa-file"></i> ${file.name} (${formatFileSize(file.size)})</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFileList();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 上传文件
+        uploadButton.addEventListener('click', () => {
+            if (selectedFiles.length === 0) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const formData = new FormData();
+            const currentPath = document.querySelector('input[name="current_path"]').value;
+
+            selectedFiles.forEach(file => {
+                formData.append('file', file);
+            });
+            formData.append('current_path', currentPath);
+
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('上传失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('上传失败: ' + error.message);
+            })
+            .finally(() => {
+                uploadButton.disabled = false;
+                uploadButton.innerHTML = '<i class="fas fa-upload"></i> 开始上传';
+            });
+        });
+
+        // 创建文件夹
+        document.getElementById('createFolderButton').addEventListener('click', () => {
+            const form = document.getElementById('createFolderForm');
+            const formData = new FormData(form);
+
+            fetch('/create_folder', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('创建失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('创建失败: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
